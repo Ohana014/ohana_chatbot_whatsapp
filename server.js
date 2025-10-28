@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('✅ Chatbot Ohana rodando no Render!');
+ console.log("✅ Chatbot Ohana rodando no Render!");
 });
 
 // Webhook de verificação (Meta/WhatsApp)
@@ -22,4 +22,5 @@ app.get('/webhook', (req, res) => {
 // Iniciar o servidor
 app.listen(PORT, '0.0.0.0', () => {
   console.log(🚀 Servidor rodando na porta ${PORT}`);
+
 
