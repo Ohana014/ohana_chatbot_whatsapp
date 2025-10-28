@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: ohana-whatsapp-chatbot
+    env: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    envVars:
+      - key: VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: PHONE_NUMBER_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PAUL_CERT_PFX
+        sync: false
+      - key: PAUL_CERT_PASS
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: RH_EMAIL_TO
+        sync: false
+      - key: CONT_EMAIL_TO
+        sync: false
+      - key: COMERCIAL_URL
+        sync: false
+    healthCheckPath: "/"

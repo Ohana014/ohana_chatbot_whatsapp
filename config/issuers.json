@@ -1,0 +1,24 @@
+{
+  "companies": [
+    {
+      "cnpj": "00000000000191",
+      "alias": "Ohana Matriz",
+      "provider": "mock",
+      "credentials": {
+        "api_key": "MOCK_API_KEY",
+        "company_id": "OHANA-MZ",
+        "municipality_code": "3550308"
+      }
+    },
+    {
+      "cnpj": "11111111000100",
+      "alias": "Ohana Filial",
+      "provider": "mock",
+      "credentials": {
+        "api_key": "MOCK_API_KEY_2",
+        "company_id": "OHANA-FL",
+        "municipality_code": "3534401"
+      }
+    }
+  ]
+}

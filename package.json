@@ -1,0 +1,21 @@
+{
+  "name": "ohana-chatbot-whatsapp",
+  "version": "1.0.0",
+  "description": "Chatbot Contábil (WhatsApp Business + Meta Cloud API + OpenAI)",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.13",
+    "easy-soap-request": "^5.4.0",
+    "xmlbuilder2": "^3.1.1",
+    "form-data": "^4.0.0"
+  }
+}
