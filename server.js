@@ -20,5 +20,6 @@ app.get('/webhook', (req, res) => {
   return res.sendStatus(403);
 });
 // Iniciar o servidor
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Servidor rodando na porta ${PORT}`);
+app.listen(PORT, () => {
+    console.log(✅ Servidor rodando na porta ${PORT});
+});
