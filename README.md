@@ -129,3 +129,38 @@ MIT
 > - **Assinatura digital XML** (tag por tag) conforme o manual.
 > - **Consulta Situação do Lote** e **Consulta Lote** para capturar **número da NFS-e** e gerar **link/pdf**.
 > - **Cancelamento** quando necessário.
+
+
+---
+## 📊 Simulador Tributário e Planejamento (Reforma Tributária)
+
+Novo serviço **5** no menu principal do WhatsApp. Funciona como uma ferramenta de
+captação de leads para vender **Planejamento Tributário**:
+
+1. Coleta regime atual, setor (Comércio/Indústria/Serviços), faturamento médio
+   mensal, folha de pagamento (usada no Fator R) e alíquota efetiva de ICMS/ISS
+   (ou usa uma média do setor).
+2. Calcula, via `services/taxSimulator.js`:
+   - **Simples Nacional** (Anexos I a V da LC 123/2006, com Fator R), **Lucro
+     Presumido** e **Lucro Real** (este último pede a margem de lucro líquido
+     estimada, já que o IRPJ/CSLL incidem sobre o lucro real e não sobre uma
+     margem presumida), mostrando qual regime tem a menor carga hoje.
+   - **Estimativa pós-Reforma Tributária** (EC 132/2023 / LC 214/2025): CBS + IBS
+     (alíquota de referência ~26,5%) substituindo PIS/Cofins/ICMS/ISS/IPI, com a
+     linha do tempo de transição 2026→2033.
+3. Envia o relatório comparativo pelo WhatsApp e oferece o **Planejamento
+   Tributário completo**: se o lead aceitar, os dados são enviados por e-mail
+   (`TAX_PLANNING_EMAIL_TO`, com fallback para `CONT_EMAIL_TO`) com um protocolo
+   `TRIB-...` para o time comercial/tributário fazer o follow-up.
+
+### ⚠️ Importante
+- Os cálculos são **estimativas simplificadas** (tabelas oficiais do Simples
+  Nacional + alíquota de referência divulgada para a Reforma), úteis como
+  *lead magnet* e ponto de partida — não substituem uma análise tributária
+  feita com os dados contábeis reais da empresa (DRE, créditos de insumos,
+  benefícios setoriais, Imposto Seletivo etc.).
+- A regulamentação da Reforma Tributária ainda está em produção (leis
+  complementares, alíquotas de referência por Estado/Município). Revise os
+  parâmetros em `services/taxSimulator.js` (`REFORMA`, `CRONOGRAMA_TRANSICAO`,
+  tabelas do Simples) periodicamente.
+- Configure `TAX_PLANNING_EMAIL_TO` no `.env` para receber os leads gerados.
