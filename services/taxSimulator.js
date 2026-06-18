@@ -140,6 +140,33 @@ export function calcPresumido({ faturamentoMensal, setor, icmsAliq, issAliq }) {
   };
 }
 
+// ===== Lucro Real =====
+// Diferente do Presumido, o IRPJ/CSLL incidem sobre o lucro líquido contábil
+// real (informado pelo usuário como margem estimada), e o PIS/Cofins passam
+// a ser não cumulativos (alíquotas maiores, mas com direito a créditos).
+export function calcLucroReal({ faturamentoMensal, setor, margemLucro, icmsAliq, issAliq }) {
+  const baseReal = faturamentoMensal * margemLucro;
+  const limiteAdicional = 20000; // R$20.000/mês (proporcional aos R$60.000/trimestre)
+  const irpj = baseReal * 0.15 + Math.max(0, baseReal - limiteAdicional) * 0.10;
+  const csll = baseReal * 0.09;
+  const credito = CREDITO_ESTIMADO_SETOR[setor] ?? 0.30;
+  const baseNaoCumulativa = faturamentoMensal * (1 - credito);
+  const pis = baseNaoCumulativa * 0.0165;
+  const cofins = baseNaoCumulativa * 0.076;
+  const aliqIcms = icmsAliq > 0 ? icmsAliq : (ICMS_MEDIO_SETOR[setor] ?? 0);
+  const aliqIss = issAliq > 0 ? issAliq : (ISS_MEDIO_SETOR[setor] ?? 0);
+  const icms = faturamentoMensal * aliqIcms;
+  const iss = faturamentoMensal * aliqIss;
+  const totalMensal = irpj + csll + pis + cofins + icms + iss;
+  return {
+    margemLucro, irpj, csll, pis, cofins, icms, iss, totalMensal,
+    aliquotaEfetiva: faturamentoMensal > 0 ? totalMensal / faturamentoMensal : 0,
+    creditoEstimadoPct: credito,
+    icmsAliqUsada: aliqIcms,
+    issAliqUsada: aliqIss
+  };
+}
+
 // ===== Reforma Tributária (EC 132/2023 / LC 214/2025) =====
 // CBS (federal) + IBS (estadual/municipal) substituem PIS, Cofins, ICMS, ISS e IPI.
 // Alíquota de referência combinada estimada pelo governo/Senado: ~26,5% (CBS 8,8% + IBS 17,7%).
@@ -180,14 +207,18 @@ export function calcReformaPlena({ faturamentoMensal, setor }) {
 }
 
 // Orquestra o cálculo completo: regime(s) hoje + estimativa na reforma plena (2033).
-export function simulate({ regimeAtual, setor, faturamentoMensal, folhaMensal = 0, icmsAliq = 0, issAliq = 0 }) {
+export function simulate({ regimeAtual, setor, faturamentoMensal, folhaMensal = 0, icmsAliq = 0, issAliq = 0, margemLucro = null }) {
   const fatorR = faturamentoMensal > 0 ? folhaMensal / faturamentoMensal : 0;
   const simples = calcSimplesNacional({ faturamentoMensal, setor, fatorR });
   const presumido = calcPresumido({ faturamentoMensal, setor, icmsAliq, issAliq });
+  const real = regimeAtual === "real" && margemLucro != null
+    ? calcLucroReal({ faturamentoMensal, setor, margemLucro, icmsAliq, issAliq })
+    : null;
 
   const opcoesHoje = [
     simples.elegivel ? { nome: "Simples Nacional", totalMensal: simples.totalMensal, aliquotaEfetiva: simples.aliquotaEfetiva } : null,
-    { nome: "Lucro Presumido", totalMensal: presumido.totalMensal, aliquotaEfetiva: presumido.aliquotaEfetiva }
+    { nome: "Lucro Presumido", totalMensal: presumido.totalMensal, aliquotaEfetiva: presumido.aliquotaEfetiva },
+    real ? { nome: "Lucro Real", totalMensal: real.totalMensal, aliquotaEfetiva: real.aliquotaEfetiva } : null
   ].filter(Boolean);
 
   const melhorRegimeHoje = opcoesHoje.reduce((a, b) => (b.totalMensal < a.totalMensal ? b : a));
@@ -195,12 +226,13 @@ export function simulate({ regimeAtual, setor, faturamentoMensal, folhaMensal = 
   const regimeLabel = {
     simples: "Simples Nacional",
     presumido: "Lucro Presumido",
-    real: "Lucro Real (estimativa aproximada — recomenda-se análise com dados reais)",
+    real: "Lucro Real",
     naosei: "Não informado"
   }[regimeAtual] || "Não informado";
 
   const totalHojeRegimeAtual =
     regimeAtual === "simples" && simples.elegivel ? simples.totalMensal :
+    regimeAtual === "real" && real ? real.totalMensal :
     (regimeAtual === "presumido" || regimeAtual === "real" || regimeAtual === "naosei") ? presumido.totalMensal :
     melhorRegimeHoje.totalMensal;
 
@@ -215,6 +247,7 @@ export function simulate({ regimeAtual, setor, faturamentoMensal, folhaMensal = 
     regimeLabel,
     simples,
     presumido,
+    real,
     melhorRegimeHoje,
     totalHojeRegimeAtual,
     reforma,
@@ -239,6 +272,9 @@ export function buildReportText(sim) {
     lines.push(`• Simples Nacional: não elegível (${sim.simples.motivo})`);
   }
   lines.push(`• Lucro Presumido: ${formatCurrency(sim.presumido.totalMensal)}/mês — alíquota efetiva ${formatPercent(sim.presumido.aliquotaEfetiva)}`);
+  if (sim.real) {
+    lines.push(`• Lucro Real (margem informada ${formatPercent(sim.real.margemLucro)}): ${formatCurrency(sim.real.totalMensal)}/mês — alíquota efetiva ${formatPercent(sim.real.aliquotaEfetiva)}`);
+  }
   lines.push(`➡️ Regime hoje mais vantajoso na simulação: *${sim.melhorRegimeHoje.nome}* (${formatCurrency(sim.melhorRegimeHoje.totalMensal)}/mês)`);
   lines.push("");
   lines.push("🔄 *Estimativa na Reforma Tributária plena (2033)*");

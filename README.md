@@ -141,8 +141,10 @@ captação de leads para vender **Planejamento Tributário**:
    mensal, folha de pagamento (usada no Fator R) e alíquota efetiva de ICMS/ISS
    (ou usa uma média do setor).
 2. Calcula, via `services/taxSimulator.js`:
-   - **Simples Nacional** (Anexos I a V da LC 123/2006, com Fator R) e **Lucro
-     Presumido**, mostrando qual regime tem a menor carga hoje.
+   - **Simples Nacional** (Anexos I a V da LC 123/2006, com Fator R), **Lucro
+     Presumido** e **Lucro Real** (este último pede a margem de lucro líquido
+     estimada, já que o IRPJ/CSLL incidem sobre o lucro real e não sobre uma
+     margem presumida), mostrando qual regime tem a menor carga hoje.
    - **Estimativa pós-Reforma Tributária** (EC 132/2023 / LC 214/2025): CBS + IBS
      (alíquota de referência ~26,5%) substituindo PIS/Cofins/ICMS/ISS/IPI, com a
      linha do tempo de transição 2026→2033.

@@ -45,6 +45,30 @@ const menuImpostos = () =>
 2) DAS / Simples Nacional
 3) Outros impostos (IRPJ, CSLL, PIS, COFINS)`;
 
+async function runTaxSimulation(from, session) {
+  const t = session.data.taxsim;
+  const sim = simulate({
+    regimeAtual: t.regimeAtual,
+    setor: t.setor,
+    faturamentoMensal: t.faturamentoMensal,
+    folhaMensal: t.folhaMensal,
+    icmsAliq: t.icmsAliq,
+    issAliq: t.issAliq,
+    margemLucro: t.margemLucro ?? null
+  });
+  t.resultado = sim;
+
+  await sendText(from, buildReportText(sim));
+  session.step = "taxsim_cta";
+  await sendText(
+    from,
+    `Quer que nossos especialistas façam um *Planejamento Tributário completo*, validando esses números com os dados reais da sua empresa e buscando a melhor estratégia diante da Reforma Tributária?
+
+1) Sim, quero o Planejamento Tributário
+2) Não, por agora`
+  );
+}
+
 export async function handleIncoming(from, text) {
   const session = getSession(from);
   const msg = (text || "").trim();
@@ -340,25 +364,27 @@ Digite *1* para Confirmar ou *2* para Corrigir (recomeçar).`
       t.icmsAliq = t.setor !== "servicos" ? aliq : 0;
       t.issAliq = t.setor === "servicos" ? aliq : 0;
 
-      const sim = simulate({
-        regimeAtual: t.regimeAtual,
-        setor: t.setor,
-        faturamentoMensal: t.faturamentoMensal,
-        folhaMensal: t.folhaMensal,
-        icmsAliq: t.icmsAliq,
-        issAliq: t.issAliq
-      });
-      t.resultado = sim;
+      if (t.regimeAtual === "real") {
+        session.step = "taxsim_margem";
+        await sendText(
+          from,
+          "Para o *Lucro Real*, o IRPJ/CSLL incidem sobre o lucro líquido de fato (não uma margem presumida). Qual a *margem de lucro líquido estimada* da empresa, em %? (ex.: 15)"
+        );
+        break;
+      }
 
-      await sendText(from, buildReportText(sim));
-      session.step = "taxsim_cta";
-      await sendText(
-        from,
-        `Quer que nossos especialistas façam um *Planejamento Tributário completo*, validando esses números com os dados reais da sua empresa e buscando a melhor estratégia diante da Reforma Tributária?
+      await runTaxSimulation(from, session);
+      break;
+    }
 
-1) Sim, quero o Planejamento Tributário
-2) Não, por agora`
-      );
+    case "taxsim_margem": {
+      const raw = parseCurrencyBR(msg);
+      if (!Number.isFinite(raw) || raw < 0) {
+        await sendText(from, "Não entendi. Informe a margem de lucro líquido estimada em % (ex.: 15).");
+        break;
+      }
+      session.data.taxsim.margemLucro = raw > 1 ? raw / 100 : raw;
+      await runTaxSimulation(from, session);
       break;
     }
 
